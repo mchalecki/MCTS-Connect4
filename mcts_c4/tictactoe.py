@@ -40,13 +40,13 @@ class TicTacToeBoard(_TTTB, Node):
             self.make_move(i) for i, value in enumerate(self.tup) if value is None
         }
 
-    def find_random_child(self) -> 'TicTacToeBoard':
+    def make_random_move(self) -> 'TicTacToeBoard':
         if self.terminal:
             return None  # If the game is finished then no moves can be made
         empty_spots = [i for i, value in enumerate(self.tup) if value is None]
         return self.make_move(choice(empty_spots))
 
-    def reward(self):
+    def reward(self)->float:
         if not self.terminal:
             raise RuntimeError(f"reward called on nonterminal board {self}")
         if self.winner is self.turn:

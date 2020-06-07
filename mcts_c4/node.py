@@ -1,4 +1,5 @@
 from abc import abstractmethod, ABC
+from typing import Set
 
 
 class Node(ABC):
@@ -9,22 +10,22 @@ class Node(ABC):
     """
 
     @abstractmethod
-    def find_children(self):
+    def find_children(self) -> Set['Node']:
         "All possible successors of this board state"
         return set()
 
     @abstractmethod
-    def find_random_child(self):
+    def make_random_move(self) -> 'Node':
         "Random successor of this board state (for more efficient simulation)"
         return None
 
     @property
     @abstractmethod
-    def terminal(self):
+    def terminal(self) -> bool:
         pass
 
     @abstractmethod
-    def reward(self):
+    def reward(self) -> int:
         "Assumes `self` is terminal node. 1=win, 0=loss, .5=tie, etc"
         return 0
 

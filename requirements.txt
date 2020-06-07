@@ -1,4 +1,5 @@
-jupyter-notebook
+jupyterlab
 numpy
 matplotlib
-git+github.com/IASIAI/gym-connect-fouro@master
+pytest
+# git+https://github.com/Danielhp95/gym-connect4

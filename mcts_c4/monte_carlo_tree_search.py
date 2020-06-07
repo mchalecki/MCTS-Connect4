@@ -20,13 +20,13 @@ class MCTS:
         self.children = dict()  # children of each node
         self.exploration_weight = exploration_weight
 
-    def choose(self, node: Node):
+    def choose(self, node: Node) -> Node:
         "Choose the best successor of node. (Choose a move in the game)"
         if node.terminal:
             raise RuntimeError(f"choose called on terminal node {node}")
 
         if node not in self.children:
-            return node.find_random_child()
+            return node.make_random_move()
 
         def score(n):
             if self.N[n] == 0:
@@ -70,8 +70,9 @@ class MCTS:
         while True:
             if node.terminal:
                 reward = node.reward()
-                return 1 - reward if invert_reward else reward
-            node = node.find_random_child()
+                reward = 1 - reward if invert_reward else reward
+                return reward
+            node = node.make_random_move()
             invert_reward = not invert_reward
 
     def _backpropagate(self, path: List[Node], reward: int) -> None:
