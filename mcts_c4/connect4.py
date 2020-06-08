@@ -1,10 +1,10 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from random import choice
 from typing import Optional, Tuple, Generator, Set
 
 import numpy as np
 
-from mcts_c4.monte_carlo_tree_search import Node
+from mcts_c4.monte_carlo_tree_search import Node, MCTS
 
 Pos = Tuple[int, int]  # h,w
 
@@ -19,6 +19,8 @@ class Connect4Board(Node):
     winner: bool = None
     terminal: bool = False
 
+    empty_field: int = field(init=False, default=5)
+
     def find_children(self) -> Set['Connect4Board']:
         if self.terminal:  # If the game is finished then no moves can be made
             return set()
@@ -27,14 +29,16 @@ class Connect4Board(Node):
         }
 
     def avaliable_moves(self) -> Generator[int, None, None]:
-        for i in range(0, self.height):
-            if nan_in_np_arr(self.board[i]):
+        for i in range(0, self.width):
+            if nan_in_np_arr(self.board[:, i]):
                 yield i
 
     def make_random_move(self) -> 'Connect4Board':
         if self.terminal:
             return None  # If the game is finished then no moves can be made
-        avaliable_moves = self.avaliable_moves()
+        avaliable_moves = list(self.avaliable_moves())
+        if not avaliable_moves:
+            raise RuntimeError("Game should have ended")
         return self.make_move(choice(avaliable_moves))
 
     def reward(self) -> float:
@@ -50,28 +54,22 @@ class Connect4Board(Node):
         # The winner is neither True, False, nor None
         raise RuntimeError(f"board has unknown winner type {self.winner}")
 
-    def __eq__(self, other: 'Connect4Board') -> bool:
-        return self.board == other.board
-
-    def __hash__(self):
-        return hash(self.board.tostring())
-
     def make_move(self, index) -> 'Connect4Board':
         new_board = None
 
         performed_action = False
         for i in range(self.height - 1, -1, -1):
-            if self.board[i][index] == np.nan:  # move is avaliable
-                new_board = self.board[i][index].copy()
+            if np.isnan(self.board[i][index]):  # move is avaliable
+                new_board = self.board.copy()
                 new_board[i][index] = self.turn
                 performed_action = True
                 break
         if not performed_action:
-            raise RuntimeError("Illegal move")
+            raise RuntimeError(f"Illegal move, tried to do {index}")
 
         turn = not self.turn
-        winner = self.check_winners(self.board)
-        is_terminal = (winner is not None) or nan_in_np_arr(self.board)
+        winner = self.check_winners(new_board)
+        is_terminal = (winner is not None) or not nan_in_np_arr(new_board)
         return Connect4Board(new_board, self.height, self.width, turn, winner, is_terminal)
 
     def check_winners(self, board: np.ndarray) -> Optional[bool]:  # _find_winner
@@ -85,7 +83,7 @@ class Connect4Board(Node):
 
     @staticmethod
     def create_empty_board(h: int, w: int) -> 'Connect4Board':
-        board = np.empty((3, 3,))
+        board = np.empty((h, w,))
         board[:] = np.nan
         return Connect4Board(board, h, w)
 
@@ -107,7 +105,41 @@ class Connect4Board(Node):
             for y in range(0, self.height - 3):
                 yield (y, x), (y + 1, x - 1), (y + 2, x - 2), (y + 3, x - 3)
 
+    def __eq__(self, other: 'Connect4Board') -> bool:
+        return self.board == other.board
+
+    def __hash__(self):
+        return hash(self.board.tostring())
+
 
 def nan_in_np_arr(arr: np.array) -> bool:
     # https://stackoverflow.com/questions/6736590/fast-check-for-nan-in-numpy
     return np.isnan(np.sum(arr))
+
+
+def play_game():
+    tree = MCTS()
+    board = Connect4Board.create_empty_board(6, 7)
+    print(board)
+    while True:
+        row = int(input("Enter row: "))
+        board = board.make_move(row)
+        print(board.board)
+        if board.terminal:
+            break
+        print("1")
+
+        for _ in range(50):
+            tree.do_rollout(board)
+        board = tree.choose(board)
+        print("2")
+
+        print(board.board)
+        print(board.terminal)
+        print("3")
+        if board.terminal:
+            break
+
+
+if __name__ == "__main__":
+    play_game()

@@ -6,9 +6,11 @@ https://gist.github.com/qpwo/c538c6f73727e254fdc7fab81024f6e1
 """
 import math
 from collections import defaultdict
-from typing import List
+from typing import List, TypeVar
 
 from mcts_c4.node import Node
+
+N = TypeVar('N', bound=Node)
 
 
 class MCTS:
@@ -20,7 +22,7 @@ class MCTS:
         self.children = dict()  # children of each node
         self.exploration_weight = exploration_weight
 
-    def choose(self, node: Node) -> Node:
+    def choose(self, node: N) -> N:
         "Choose the best successor of node. (Choose a move in the game)"
         if node.terminal:
             raise RuntimeError(f"choose called on terminal node {node}")
@@ -35,7 +37,7 @@ class MCTS:
 
         return max(self.children[node], key=score)
 
-    def do_rollout(self, node) -> None:
+    def do_rollout(self, node: N) -> None:
         "Make the tree one layer better. (Train for one iteration.)"
         path = self._select(node)
         leaf = path[-1]
@@ -43,7 +45,7 @@ class MCTS:
         reward = self._simulate(leaf)
         self._backpropagate(path, reward)
 
-    def _select(self, node: Node) -> List[Node]:
+    def _select(self, node: N) -> List[N]:
         "Find an unexplored descendent of `node`"
         path = []
         while True:
@@ -58,13 +60,13 @@ class MCTS:
                 return path
             node = self._uct_select(node)  # descend a layer deeper
 
-    def _expand(self, node):
+    def _expand(self, node: N):
         "Update the `children` dict with the children of `node`"
         if node in self.children:
             return  # already expanded
         self.children[node] = node.find_children()
 
-    def _simulate(self, node: Node) -> int:
+    def _simulate(self, node: N) -> int:
         "Returns the reward for a random simulation (to completion) of `node`"
         invert_reward = True
         while True:
@@ -75,14 +77,14 @@ class MCTS:
             node = node.make_random_move()
             invert_reward = not invert_reward
 
-    def _backpropagate(self, path: List[Node], reward: int) -> None:
+    def _backpropagate(self, path: List[N], reward: int) -> None:
         "Send the reward back up to the ancestors of the leaf"
         for node in reversed(path):
             self.N[node] += 1
             self.Q[node] += reward
             reward = 1 - reward  # 1 for me is 0 for my enemy, and vice versa
 
-    def _uct_select(self, node):
+    def _uct_select(self, node: N) -> N:
         "Select a child of node, balancing exploration & exploitation"
 
         # All children of node should already be expanded:
