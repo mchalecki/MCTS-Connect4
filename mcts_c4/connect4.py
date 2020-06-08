@@ -30,7 +30,7 @@ class Connect4Board(Node):
 
     def avaliable_moves(self) -> Generator[int, None, None]:
         for i in range(0, self.width):
-            if nan_in_np_arr(self.board[:, i]):
+            if self.empty_in_arr(self.board[:, i]):
                 yield i
 
     def make_random_move(self) -> 'Connect4Board':
@@ -59,7 +59,7 @@ class Connect4Board(Node):
 
         performed_action = False
         for i in range(self.height - 1, -1, -1):
-            if np.isnan(self.board[i][index]):  # move is avaliable
+            if self.board[i][index] == self.empty_field:  # move is avaliable
                 new_board = self.board.copy()
                 new_board[i][index] = self.turn
                 performed_action = True
@@ -69,23 +69,22 @@ class Connect4Board(Node):
 
         turn = not self.turn
         winner = self.check_winners(new_board)
-        is_terminal = (winner is not None) or not nan_in_np_arr(new_board)
+        is_terminal = (winner is not None) or not self.empty_in_arr(new_board)
         return Connect4Board(new_board, self.height, self.width, turn, winner, is_terminal)
 
     def check_winners(self, board: np.ndarray) -> Optional[bool]:  # _find_winner
         "Returns None if no winner, True if player with True turn, False if other one"
         for p1, p2, p3, p4 in self.winning_combos():
             v1, v2, v3, v4 = board[p1], board[p2], board[p3], board[p4]
-            if False is v1 is v2 is v3 is v4:
-                return False
-            if True is v1 is v2 is v3 is v4:
-                return True
+            if v1 == v2 == v3 == v4 and (v1 == True or v1 == False):
+                return v1
 
     @staticmethod
     def create_empty_board(h: int, w: int) -> 'Connect4Board':
         board = np.empty((h, w,))
-        board[:] = np.nan
-        return Connect4Board(board, h, w)
+        c4_board = Connect4Board(board, h, w)
+        c4_board.board[:] = c4_board.empty_field
+        return c4_board
 
     def winning_combos(self) -> Generator[Tuple[Pos, Pos, Pos, Pos], None, None]:
         # Horizontal
@@ -106,10 +105,13 @@ class Connect4Board(Node):
                 yield (y, x), (y + 1, x - 1), (y + 2, x - 2), (y + 3, x - 3)
 
     def __eq__(self, other: 'Connect4Board') -> bool:
-        return self.board == other.board
+        return (self.board == other.board).all()
 
     def __hash__(self):
         return hash(self.board.tostring())
+
+    def empty_in_arr(self, arr: np.array) -> bool:
+        return (arr == self.empty_field).any()
 
 
 def nan_in_np_arr(arr: np.array) -> bool:
@@ -127,18 +129,16 @@ def play_game():
         print(board.board)
         if board.terminal:
             break
-        print("1")
 
-        for _ in range(50):
+        for _ in range(500):
             tree.do_rollout(board)
         board = tree.choose(board)
-        print("2")
-
+        print()
         print(board.board)
-        print(board.terminal)
-        print("3")
         if board.terminal:
             break
+    print("Game ended:")
+    print(board.board)
 
 
 if __name__ == "__main__":
