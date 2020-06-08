@@ -2,4 +2,5 @@ jupyterlab
 numpy
 matplotlib
 pytest
-# git+https://github.com/Danielhp95/gym-connect4
+pydantic
+fastapi

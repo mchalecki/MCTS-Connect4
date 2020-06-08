@@ -1,9 +1,12 @@
+import pickle as pkl
 from dataclasses import dataclass, field
 from random import choice
 from typing import Optional, Tuple, Generator, Set
 
 import numpy as np
+from tqdm import tqdm
 
+from mcts_c4.config import SelfPlayConfig
 from mcts_c4.monte_carlo_tree_search import Node, MCTS
 
 Pos = Tuple[int, int]  # h,w
@@ -141,5 +144,24 @@ def play_game():
     print(board.board)
 
 
+def self_play(config: SelfPlayConfig):
+    tree = MCTS()
+    for i in tqdm(range(config.n_self_play)):
+        board = Connect4Board.create_empty_board(config.height, config.width)
+        # print(board)
+        while True:
+            for _ in range(config.n_rollouts):
+                tree.do_rollout(board)
+            board = tree.choose(board)
+            # print("\n" + board.board)
+            if board.terminal:
+                break
+        print(f"{i} Game ended:")
+        print(board.board)
+    with open(f'pickles/{config}.pkl', "wb") as f:
+        pkl.dump(tree, f)
+
+
 if __name__ == "__main__":
-    play_game()
+    config = SelfPlayConfig()
+    self_play(config)
