@@ -4,7 +4,7 @@ from typing import Optional, Tuple, Generator, Set
 
 import numpy as np
 
-from mcts_c4.monte_carlo_tree_search import Node, MCTS
+from mcts_c4.monte_carlo_tree_search import Node
 
 Pos = Tuple[int, int]  # h,w
 
@@ -81,7 +81,7 @@ class Connect4Board(Node):
 
     @staticmethod
     def create_empty_board(h: int, w: int) -> 'Connect4Board':
-        board = np.empty((h, w,))
+        board = np.empty((h, w,), np.int)
         c4_board = Connect4Board(board, h, w)
         c4_board.board[:] = c4_board.empty_field
         return c4_board
@@ -117,6 +117,3 @@ class Connect4Board(Node):
 def nan_in_np_arr(arr: np.array) -> bool:
     # https://stackoverflow.com/questions/6736590/fast-check-for-nan-in-numpy
     return np.isnan(np.sum(arr))
-
-
-

@@ -1,7 +1,10 @@
 import pickle as pkl
+from dataclasses import dataclass
 from pathlib import Path
+from typing import List, Optional
 
 from fastapi import FastAPI
+from pydantic.main import BaseModel
 
 from mcts_c4.connect4 import Connect4Board
 
@@ -12,12 +15,49 @@ with open(save_pkl, 'rb') as f:
     tree = pkl.load(f)
 
 
-@app.get("/new_game")
-async def root():
+class Game(BaseModel):
+    bot_starts: bool = True
+
+
+@dataclass
+class GameState:
+    board: List[List[int]]
+    winner: Optional[int]
+    legal_moves: List[int]
+    terminal: bool = False
+
+    @staticmethod
+    def from_board(board: Connect4Board):
+        return GameState(board.board.tolist(), int(board.winner) if board.winner is not None else None,
+                         list(board.avaliable_moves()), board.terminal)
+
+
+@app.post("/new_game/")
+async def create_game(game: Game) -> GameState:
+    board = Connect4Board.create_empty_board(6, 7)
+    app.state.game = game
+    if game.bot_starts:
+        board = tree.choose(board)
+        print(board)
+    app.state.board = board
+    return GameState.from_board(board)
+
+
+class Move(BaseModel):
+    row: int
+
+
+@app.post("/make_move/")
+async def create_game(move: Move) -> GameState:
     try:
-        print(app.state.board.board)
+        board: Connect4Board = app.state.board
     except AttributeError:
         print("Dont have board")
-    board = Connect4Board.create_empty_board(6, 7)
-    app.state.board = board
-    return 200
+        return 400
+    new_board = board.make_move(move.row)
+    print(new_board)
+    if not new_board.terminal:
+        new_board = tree.choose(new_board)
+        print(new_board)
+    app.state.board = new_board
+    return GameState.from_board(new_board)
