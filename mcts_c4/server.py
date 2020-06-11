@@ -4,11 +4,23 @@ from pathlib import Path
 from typing import List, Optional
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic.main import BaseModel
 
 from mcts_c4.connect4 import Connect4Board
 
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+]
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 save_pkl = Path(__file__).parent / "pickles" / "1_6_7_50.pkl"
 with open(save_pkl, 'rb') as f:
@@ -25,11 +37,12 @@ class GameState:
     winner: Optional[int]
     legal_moves: List[int]
     terminal: bool = False
+    empty_field: int = 5
 
     @staticmethod
     def from_board(board: Connect4Board):
         return GameState(board.board.tolist(), int(board.winner) if board.winner is not None else None,
-                         list(board.avaliable_moves()), board.terminal)
+                         list(board.avaliable_moves()), board.terminal, board.empty_field)
 
 
 @app.post("/new_game/")
@@ -48,7 +61,7 @@ class Move(BaseModel):
 
 
 @app.post("/make_move/")
-async def create_game(move: Move) -> GameState:
+async def make_move(move: Move) -> GameState:
     try:
         board: Connect4Board = app.state.board
     except AttributeError:
