@@ -9,5 +9,5 @@ pip install -r requirements.txt
 ```
 2. Launch webserver
 ```bash
-uvicorn mcts_c4.server:app
+uvicorn server:app
 ```

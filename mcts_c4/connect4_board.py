@@ -29,9 +29,10 @@ class Connect4Board(Node):
         }
 
     def avaliable_moves(self) -> Generator[int, None, None]:
-        for i in range(0, self.width):
-            if self.empty_in_arr(self.board[:, i]):
-                yield i
+        if not self.terminal:
+            for i in range(0, self.width):
+                if self.empty_in_arr(self.board[:, i]):
+                    yield i
 
     def make_random_move(self) -> 'Connect4Board':
         if self.terminal:
