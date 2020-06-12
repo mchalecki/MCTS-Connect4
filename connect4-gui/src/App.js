@@ -25,14 +25,17 @@ let BoardImage = () => {
 export default class App extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      play: false,
+    this.state = App.initialState;
+  }
+
+  static get initialState() {
+    return {
       board: null,
       terminal: null,
       winner: null,
       empty_field: null,
       legal_moves: null
-    };
+    }
   }
 
   updateGameState(response) {
@@ -51,22 +54,14 @@ export default class App extends Component {
     axios.post(`${backend_url}/new_game`, {
       bot_starts: bot_starts
     })
-      .then( (response) =>{
-        this.updateGameState(response)
-        this.setState({play: true})
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
+      .then(this.updateGameState.bind(this))
+      .catch(console.log)
   }
 
   sendAction(row) {
     axios.post(`${backend_url}/make_move`, {"row": row})
-      .then(this.updateGameState.bind(this)
-      )
-      .catch(function (error) {
-        console.log(error);
-      });
+      .then(this.updateGameState.bind(this))
+      .catch(console.log)
   }
 
 
@@ -80,7 +75,7 @@ export default class App extends Component {
   render() {
     let gameGui = null;
 
-    if (this.state.play) {
+    if (this.state.board) {
       let konvaButtons = [];
       if (this.state.winner === null && this.state.legal_moves) {
         this.state.legal_moves.forEach(id => {
@@ -127,9 +122,9 @@ export default class App extends Component {
       <Container className="p-3">
         <Jumbotron>
           <h1 align={"center"}>Welcome To Connect4</h1>
-          {this.state.play ?
+          {this.state.board ?
             <Row><Col><Button
-              onClick={() => this.setState({play: false})}
+              onClick={() => this.setState(App.initialState)}
             >Reset</Button></Col></Row>
             : <Row>
               <Col><Button onClick={() => this.startGame(false)}>New Game - Start Player</Button></Col>
