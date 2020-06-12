@@ -13,6 +13,8 @@ let backend_url = 'http://127.0.0.1:8000'
 let boardWidth = 870
 let boardHeight = 600
 let boardYOffset = 60
+let x_offset = (x) => x * boardWidth / 7.1
+let y_offset = (y) => y * boardHeight / 6
 
 let BoardImage = () => {
   const [image] = useImage('http://www.nonkit.com/smallbasic.files/Connect4Board.png');
@@ -31,10 +33,10 @@ export default class App extends Component {
       empty_field: null,
       legal_moves: null
     };
-    this.startGame.bind(this)
   }
 
-  updateGameState(gameState) {
+  updateGameState(response) {
+    let gameState = response.data
     console.log(gameState)
     this.setState({
       board: gameState.board,
@@ -49,10 +51,10 @@ export default class App extends Component {
     axios.post(`${backend_url}/new_game`, {
       bot_starts: bot_starts
     })
-      .then(function (response) {
-        this.updateGameState(response.data)
+      .then( (response) =>{
+        this.updateGameState(response)
         this.setState({play: true})
-      }.bind(this))
+      })
       .catch(function (error) {
         console.log(error);
       });
@@ -60,24 +62,18 @@ export default class App extends Component {
 
   sendAction(row) {
     axios.post(`${backend_url}/make_move`, {"row": row})
-      .then(function (response) {
-        this.updateGameState(response.data)
-      }.bind(this))
+      .then(this.updateGameState.bind(this)
+      )
       .catch(function (error) {
         console.log(error);
       });
   }
 
-  x_offset(x) {
-    return x * boardWidth / 7.1
-  }
 
   circlePos(y, x, color = "red") {
-    let x0 = this.x_offset(x)
-    let y0 = y * boardHeight / 6
     let xstart = boardWidth / 13
     let ystart = boardYOffset + boardHeight / 11.5
-    return <Circle x={xstart + x0} y={ystart + y0} radius={45} fill={color} stroke={'black'}
+    return <Circle x={xstart + x_offset(x)} y={ystart + y_offset(y)} radius={45} fill={color} stroke={'black'}
                    strokeWidth={4}/>
   }
 
@@ -89,7 +85,7 @@ export default class App extends Component {
       if (this.state.winner === null && this.state.legal_moves) {
         this.state.legal_moves.forEach(id => {
           konvaButtons.push(
-            <Group x={40 + this.x_offset(id)} y={3} onClick={() => this.sendAction(id)}>
+            <Group x={40 + x_offset(id)} y={3} onClick={() => this.sendAction(id)}>
               <Rect strokeWidth={3} fill={"#ddd"} width={50} height={50} cornerRadius={10} stroke={"black"}
                     shadowColor={"black"} shadowBlur={10} shadowOffsetX={10} shadowOffsetY={10} shadowOpacity={0.2}
               />
