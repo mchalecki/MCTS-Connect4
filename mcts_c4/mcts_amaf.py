@@ -13,7 +13,7 @@ from mcts_c4.node import Node
 N = TypeVar('N', bound=Node)
 
 
-class MCTS:
+class MCTS_AMAF:
     "Monte Carlo tree searcher. First rollout the tree then choose a move."
 
     def __init__(self, exploration_weight=1):
@@ -42,8 +42,8 @@ class MCTS:
         path = self._select(node) # znajdz lisc przechodzac z metoda UCT
         leaf = path[-1]
         self._expand(leaf) # expand = dodaj dziecko do dicta wraz z jego wszystkimi rozwinieciami
-        reward = self._simulate(leaf)
-        self._backpropagate(path, reward)
+        reward, simulated_path = self._simulate(leaf)
+        self._backpropagate(path, simulated_path, reward)
 
     def _select(self, node: N) -> List[N]:
         "Find an unexplored descendent of `node`"
@@ -66,23 +66,26 @@ class MCTS:
             return  # already expanded
         self.children[node] = node.find_children()
 
-    def _simulate(self, node: N) -> int:
-        "Returns the reward for a random simulation (to completion) of `node`"
+    def _simulate(self, node: N) -> (int, List[N]):
+        "Returns the reward and travelled nodes for a random simulation (to completion) of `node`"
         invert_reward = True
+        simulated_path = []
         while True:
             if node.terminal:
                 reward = node.reward()
                 reward = 1 - reward if invert_reward else reward
-                return reward
+                return reward, simulated_path
             node = node.make_random_move()
+            simulated_path.append(node)
             invert_reward = not invert_reward
 
-    def _backpropagate(self, path: List[N], reward: int) -> None:
+    def _backpropagate(self, path: List[N], simulated_path: List[N], reward: int) -> None:
         "Send the reward back up to the ancestors of the leaf"
-        for node in reversed(path):
-            self.N[node] += 1
-            self.Q[node] += reward
-            reward = 1 - reward  # 1 for me is 0 for my enemy, and vice versa
+        for node in reversed(path + simulated_path):
+            if node in self.children: # update only expanded nodes, all for path, possibly not all for simulated path
+                self.N[node] += 1
+                self.Q[node] += reward
+                reward = 1 - reward  # 1 for me is 0 for my enemy, and vice versa
 
     def _uct_select(self, node: N) -> N:
         "Select a child of node, balancing exploration & exploitation"

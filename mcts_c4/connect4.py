@@ -5,6 +5,8 @@ from tqdm import tqdm
 
 from mcts_c4.config import SelfPlayConfig
 from mcts_c4.connect4_board import Connect4Board
+from mcts_c4.mcts_amaf import MCTS_AMAF
+from mcts_c4.mcts_rave import MCTS_RAVE
 from mcts_c4.monte_carlo_tree_search import MCTS
 
 
@@ -32,15 +34,16 @@ def play_game():
 
 
 def self_play(config: SelfPlayConfig):
-    tree = MCTS()
+    tree = MCTS_RAVE() #MCTS_AMAF() # MCTS()
     for i in tqdm(range(config.n_self_play)):
         board = Connect4Board.create_empty_board(config.height, config.width)
-        # print(board)
+        print(board)
         while True:
-            for _ in range(config.n_rollouts):
+            for _ in range(config.n_rollouts): # rollout = single game simulation iteration
                 tree.do_rollout(board)
-            board = tree.choose(board)
-            # print("\n" + board.board)
+            board = tree.choose(board) # wybierz ruch
+            print("\n")
+            print(board.board)
             if board.terminal:
                 break
         print(f"{i} Game ended:")
@@ -59,3 +62,5 @@ def test_load():
 if __name__ == "__main__":
     config = SelfPlayConfig()
     self_play(config)
+
+# TODO: pre-make pickles dir
