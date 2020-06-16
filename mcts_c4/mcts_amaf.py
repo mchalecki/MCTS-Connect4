@@ -22,6 +22,8 @@ class MCTS_AMAF:
         self.children = dict()  # children of each node
         self.exploration_weight = exploration_weight
 
+        self.name = "mcts_amaf"
+
     def choose(self, node: N) -> N:
         "Choose the best successor of node. (Choose a move in the game)"
         if node.terminal:
