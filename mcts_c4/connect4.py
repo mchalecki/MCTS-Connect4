@@ -5,10 +5,12 @@ from itertools import count
 from pathlib import Path
 from random import shuffle
 
+import numpy as np
 from tqdm import tqdm
 
 from mcts_c4.config import SelfPlayConfig
 from mcts_c4.connect4_board import Connect4Board
+from mcts_c4.mcts_amaf import MCTS_AMAF
 from mcts_c4.monte_carlo_tree_search import MCTS
 
 
@@ -75,20 +77,30 @@ def play_2_models(tree1: MCTS, tree2: MCTS, n_games: int = 100):
     player_order = [0, 1]
     trees = [tree1, tree2]
     winnings = {0: 0, 1: 0, -1: 0}  # 0 tree1, 1 tree2, -1 draw
+    total_moves = []
     for _ in tqdm(range(n_games)):
+        moves = 0
         board = Connect4Board.create_empty_board(6, 7)
         shuffle(player_order)
         while True:
             board = trees[player_order[0]].choose(board)  # make move with 1
+            moves += 1
             if board.terminal: break
             board = trees[player_order[1]].choose(board)  # make move with 0
+            moves += 1
             if board.terminal: break
+        total_moves.append(moves)
         if board.winner is not None:  # if board.winner == 1 then first player won
             winnings[player_order[abs(board.winner - 1)]] += 1  # imnot sure
         else:
             winnings[-1] += 1
     end_time = datetime.now()
+
+    winning_perc = {k: v / n_games for k, v in winnings.items()}
+    print(winning_perc)
     print(winnings)
+    print(
+        f"Average {np.average(total_moves)}, std: {np.std(total_moves)}, min: {np.min(total_moves)}, max:{np.max(total_moves)}")
     print(f"Elapsed {(end_time - start_time).total_seconds()}")
 
 
@@ -101,24 +113,27 @@ def load_tree(filename: str):
 
 if __name__ == "__main__":
     ## Two trees play
-    # tree1 = load_tree("mcts_10_6_7_200.pkl")
-    # tree2 = load_tree("mcts_rave_10_6_7_200.pkl")
-    # play_2_models(tree1, tree2, 100_000)
+    for i in [1, 5, 10, 30]:
+        print(f"For i={i}")
+        tree1 = load_tree(f"mcts_{i}m_6_7_100.pkl")
+        tree2 = load_tree(f"mcts_amaf_{i}m_6_7_100.pkl")
+        # tree2 = load_tree(f"mcts_rave_{i}m_6_7_100.pkl")
+        play_2_models(tree1, tree2, 10_000)
 
-    config = SelfPlayConfig()
-    tree = MCTS()  # MCTS_AMAF() # MCTS_RAVE()
-
-    filenames = f'{tree.name}_{config.pretty_string()}'
-    config.log_dir.mkdir(exist_ok=True)
-    config.save_dir.mkdir(exist_ok=True)
-
-    logging.basicConfig(
-        level=logging.INFO,
-        handlers=[
-            logging.FileHandler(config.log_dir / f'{filenames}.log'),
-            logging.StreamHandler()
-        ]
-    )
-    self_play(tree, config, filenames)
+    # config = SelfPlayConfig()
+    # tree = MCTS_AMAF() #MCTS # MCTS_AMAF() # MCTS_RAVE()
+    #
+    # filenames = f'{tree.name}_{config.pretty_string()}'
+    # config.log_dir.mkdir(exist_ok=True)
+    # config.save_dir.mkdir(exist_ok=True)
+    #
+    # logging.basicConfig(
+    #     level=logging.INFO,
+    #     handlers=[
+    #         logging.FileHandler(config.log_dir / f'{filenames}.log'),
+    #         logging.StreamHandler()
+    #     ]
+    # )
+    # self_play(tree, config, filenames)
 
 # TODO: pre-make pickles dir

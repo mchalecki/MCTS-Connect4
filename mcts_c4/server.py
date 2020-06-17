@@ -22,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-save_pkl = Path(__file__).parent / "pickles" / "1_6_7_50.pkl"
+save_pkl = Path(__file__).parent / "pickles" / "mcts_rave_30m_6_7_100.pkl"
 with open(save_pkl, 'rb') as f:
     tree = pkl.load(f)
 
@@ -50,6 +50,8 @@ async def create_game(game: Game) -> GameState:
     board = Connect4Board.create_empty_board(6, 7)
     app.state.game = game
     if game.bot_starts:
+        for _ in range(100):
+            tree.do_rollout(board)
         board = tree.choose(board)
         print(board)
     app.state.board = board
@@ -70,6 +72,8 @@ async def make_move(move: Move) -> GameState:
     new_board = board.make_move(move.row)
     print(new_board)
     if not new_board.terminal:
+        for _ in range(100):
+            tree.do_rollout(new_board)
         new_board = tree.choose(new_board)
         print(new_board)
     app.state.board = new_board

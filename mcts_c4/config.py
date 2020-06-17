@@ -15,7 +15,7 @@ class MainConfig(BaseModel):
 class SelfPlayConfig(MainConfig):
     # Exclusive
     n_self_play: int = None
-    time: int = 5  # in minutes
+    time: int = 10  # in minutes
 
     save_dir = Path(__file__).parent / "pickles"
     log_dir = Path(__file__).parent / "log"
