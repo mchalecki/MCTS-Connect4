@@ -51,7 +51,7 @@ export default class App extends Component {
   }
 
   startGame(bot_starts) {
-    axios.post(`${backend_url}/new_game`, {
+    axios.post(`${backend_url}/new_game/`, {
       bot_starts: bot_starts
     })
       .then(this.updateGameState.bind(this))
@@ -59,7 +59,7 @@ export default class App extends Component {
   }
 
   sendAction(row) {
-    axios.post(`${backend_url}/make_move`, {"row": row})
+    axios.post(`${backend_url}/make_move/`, {"row": row})
       .then(this.updateGameState.bind(this))
       .catch(console.log)
   }
