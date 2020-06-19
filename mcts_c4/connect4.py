@@ -11,6 +11,7 @@ from tqdm import tqdm
 from mcts_c4.config import SelfPlayConfig
 from mcts_c4.connect4_board import Connect4Board
 from mcts_c4.mcts_amaf import MCTS_AMAF
+from mcts_c4.mcts_rave import MCTS_RAVE
 from mcts_c4.monte_carlo_tree_search import MCTS
 
 
@@ -26,7 +27,7 @@ def play_game():
             break
 
         for _ in range(500):
-            tree.do_rollout(board)
+            tree.playout(board)
         board: Connect4Board = tree.choose(board)
         print()
         print(board.board)
@@ -46,7 +47,7 @@ def self_play(tree: MCTS, config: SelfPlayConfig, filename):
         game_moves = 0
         while True:
             for _ in range(config.n_rollouts):  # rollout = single game simulation iteration
-                tree.do_rollout(board)
+                tree.playout(board)
             board = tree.choose(board)  # wybierz ruch
             game_moves += 1
             # print(board.board)
@@ -111,7 +112,7 @@ def load_tree(filename: str):
     return tree
 
 
-if __name__ == "__main__":
+def compete_2_models():
     ## Two trees play
     for i in [1, 5, 10, 30]:
         print(f"For i={i}")
@@ -120,20 +121,25 @@ if __name__ == "__main__":
         # tree2 = load_tree(f"mcts_rave_{i}m_6_7_100.pkl")
         play_2_models(tree1, tree2, 10_000)
 
-    # config = SelfPlayConfig()
-    # tree = MCTS_AMAF() #MCTS # MCTS_AMAF() # MCTS_RAVE()
-    #
-    # filenames = f'{tree.name}_{config.pretty_string()}'
-    # config.log_dir.mkdir(exist_ok=True)
-    # config.save_dir.mkdir(exist_ok=True)
-    #
-    # logging.basicConfig(
-    #     level=logging.INFO,
-    #     handlers=[
-    #         logging.FileHandler(config.log_dir / f'{filenames}.log'),
-    #         logging.StreamHandler()
-    #     ]
-    # )
-    # self_play(tree, config, filenames)
 
-# TODO: pre-make pickles dir
+def train_one_tree():
+    config = SelfPlayConfig()
+    tree = MCTS_RAVE()  # MCTS # MCTS_AMAF() # MCTS_RAVE()
+
+    filenames = f'{tree.name}_{config.pretty_string()}'
+    config.log_dir.mkdir(exist_ok=True)
+    config.save_dir.mkdir(exist_ok=True)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        handlers=[
+            logging.FileHandler(config.log_dir / f'{filenames}.log'),
+            logging.StreamHandler()
+        ]
+    )
+
+    self_play(tree, config, filenames)
+
+
+if __name__ == "__main__":
+    train_one_tree()

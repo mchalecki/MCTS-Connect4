@@ -1,6 +1,6 @@
 # MCTS (Monte Carlo Tree Search) for playing game Connect4
 Project for course MSI2
-## Running
+## Running with gui
 To run launch run: 
 - [frontend](connect4-gui)
 - [backend](mcts_c4)

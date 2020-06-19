@@ -108,13 +108,8 @@ class Connect4Board(Node):
     def __eq__(self, other: 'Connect4Board') -> bool:
         return (self.board == other.board).all()
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.board.tostring())
 
     def empty_in_arr(self, arr: np.array) -> bool:
         return (arr == self.empty_field).any()
-
-
-def nan_in_np_arr(arr: np.array) -> bool:
-    # https://stackoverflow.com/questions/6736590/fast-check-for-nan-in-numpy
-    return np.isnan(np.sum(arr))

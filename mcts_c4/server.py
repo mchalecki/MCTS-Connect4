@@ -25,7 +25,7 @@ app.add_middleware(
 save_pkl = Path(__file__).parent / "pickles" / "mcts_30m_6_7_100.pkl"
 with open(save_pkl, 'rb') as f:
     tree = pkl.load(f)
-
+    tree.exploration_weight = 0
 
 class Game(BaseModel):
     bot_starts: bool = True
@@ -51,7 +51,7 @@ async def create_game(game: Game) -> GameState:
     app.state.game = game
     if game.bot_starts:
         for _ in range(50):
-            tree.do_rollout(board)
+            tree.playout(board)
         board = tree.choose(board)
         print(board)
     app.state.board = board
@@ -72,8 +72,8 @@ async def make_move(move: Move) -> GameState:
     new_board = board.make_move(move.row)
     print(new_board)
     if not new_board.terminal:
-        for _ in range(50):
-            tree.do_rollout(new_board)
+        for _ in range(70):
+            tree.playout(new_board)
         new_board = tree.choose(new_board)
         print(new_board)
     app.state.board = new_board
